@@ -5,6 +5,15 @@
 #define kSavedScriptListKey @"AutoClicker_SavedScriptList"
 #define kCurrentScriptIndexKey @"AutoClicker_CurrentIndex"
 
+// ---------------- IOHIDEvent 苹果私有底层触控接口声明 ----------------
+typedef struct *IOHIDEventRef;
+typedef struct __IOHIDEventSystemClient *IOHIDEventSystemClientRef;
+
+extern IOHIDEventSystemClientRef IOHIDEventSystemClientCreate(CFAllocatorRef allocator);
+extern void IOHIDEventSystemClientDispatchEvent(IOHIDEventSystemClientRef client, IOHIDEventRef event);
+extern IOHIDEventRef IOHIDEventCreateDigitizerEvent(CFAllocatorRef allocator, uint64_t timeStamp, uint32_t options, uint32_t type, uint32_t identity, uint32_t eventMask, uint32_t buttonMask, CGPoint location, float pressure, float twist, float tiltX, float tiltY, float z, boolean_t range, boolean_t touch, uint32_t eventFlags);
+extern IOHIDEventRef IOHIDEventCreateDigitizerFingerEvent(CFAllocatorRef allocator, uint64_t timeStamp, uint32_t index, uint32_t options, uint32_t type, CGPoint location, float pressure, float twist, float tiltX, float tiltY, float z, boolean_t range, boolean_t touch);
+
 // ---------------- Helper: Swizzling ----------------
 static void SwizzleMethod(Class c, SEL origSEL, SEL newSEL) {
     Method origMethod = class_getInstanceMethod(c, origSEL);
@@ -151,9 +160,13 @@ static void SwizzleMethod(Class c, SEL origSEL, SEL newSEL) {
             }
         }
     }
-    for (UIWindow *w in [UIApplication sharedApplication].windows) {
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    NSArray *windows = [UIApplication sharedApplication].windows;
+    for (UIWindow *w in windows) {
         if (w != self.floatWindow && !w.hidden) return w;
     }
+    #pragma clang diagnostic pop
     return nil;
 }
 
@@ -559,110 +572,56 @@ static void SwizzleMethod(Class c, SEL origSEL, SEL newSEL) {
     });
 }
 
-- (BOOL)safeTriggerGestureOnView:(UIView *)view {
-    BOOL triggered = NO;
-    for (UIGestureRecognizer *gr in view.gestureRecognizers) {
-        if (!gr.enabled) continue;
-        @try {
-            id targets = [gr valueForKey:@"targets"];
-            if ([targets isKindOfClass:[NSArray class]]) {
-                for (id targetContainer in targets) {
-                    id target = [targetContainer valueForKey:@"target"];
-                    SEL action = NULL;
-                    
-                    id actionVal = [targetContainer valueForKey:@"action"];
-                    if ([actionVal respondsToSelector:@selector(pointerValue)]) {
-                        action = (SEL)[actionVal pointerValue];
-                    }
-                    
-                    if (target && action && [target respondsToSelector:action]) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-                        [target performSelector:action withObject:gr];
-#pragma clang diagnostic pop
-                        triggered = YES;
-                    }
-                }
-            }
-        } @catch (NSException *e) {}
-    }
-    return triggered;
-}
-
+// ---------------- 核心升级：底层硬件级 IOHIDEvent 触控模拟 ----------------
 - (void)performClickAtPoint:(CGPoint)point {
-    UIWindow *window = [self getActiveWindow];
-    if (!window) return;
-
-    UIView *targetView = [window hitTest:point withEvent:nil];
-    if (!targetView) return;
-
-    BOOL handled = NO;
-    UIView *curr = targetView;
-
-    while (curr && curr != window) {
-        if ([curr isKindOfClass:[UIControl class]]) {
-            UIControl *control = (UIControl *)curr;
-            [control sendActionsForControlEvents:UIControlEventTouchDown];
-            [control sendActionsForControlEvents:UIControlEventTouchUpInside];
-            handled = YES;
-            break;
-        }
-
-        if (curr.gestureRecognizers.count > 0) {
-            if ([self safeTriggerGestureOnView:curr]) {
-                handled = YES;
-                break;
-            }
-        }
-
-        if ([curr isKindOfClass:[UITableViewCell class]]) {
-            UITableViewCell *cell = (UITableViewCell *)curr;
-            UIView *p = cell.superview;
-            while (p && ![p isKindOfClass:[UITableView class]]) {
-                p = p.superview;
-            }
-            if ([p isKindOfClass:[UITableView class]]) {
-                UITableView *tableView = (UITableView *)p;
-                NSIndexPath *indexPath = [tableView indexPathForCell:cell];
-                if (indexPath && [tableView.delegate respondsToSelector:@selector(tableView:didSelectRowAtIndexPath:)]) {
-                    [tableView.delegate tableView:tableView didSelectRowAtIndexPath:indexPath];
-                    handled = YES;
-                    break;
-                }
-            }
-        }
-
-        if ([curr isKindOfClass:[UICollectionViewCell class]]) {
-            UICollectionViewCell *cell = (UICollectionViewCell *)curr;
-            UIView *p = cell.superview;
-            while (p && ![p isKindOfClass:[UICollectionView class]]) {
-                p = p.superview;
-            }
-            if ([p isKindOfClass:[UICollectionView class]]) {
-                UICollectionView *collectionView = (UICollectionView *)p;
-                NSIndexPath *indexPath = [collectionView indexPathForCell:cell];
-                if (indexPath && [collectionView.delegate respondsToSelector:@selector(collectionView:didSelectItemAtIndexPath:)]) {
-                    [collectionView.delegate collectionView:collectionView didSelectItemAtIndexPath:indexPath];
-                    handled = YES;
-                    break;
-                }
-            }
-        }
-
-        curr = curr.superview;
+    static IOHIDEventSystemClientRef hidClient = NULL;
+    if (!hidClient) {
+        hidClient = IOHIDEventSystemClientCreate(kCFAllocatorDefault);
     }
-
-    if (!handled) {
-        @try {
-            if ([targetView respondsToSelector:@selector(touchesBegan:withEvent:)]) {
-                [targetView touchesBegan:[NSSet set] withEvent:nil];
+    
+    if (hidClient) {
+        uint64_t machTime = mach_absolute_time();
+        
+        IOHIDEventRef downEvent = IOHIDEventCreateDigitizerFingerEvent(
+            kCFAllocatorDefault, 
+            machTime, 
+            0,          
+            3,          
+            0,          
+            point,      
+            1.0,        
+            0, 0, 0,    
+            0,          
+            true,       
+            true        
+        );
+        
+        if (downEvent) {
+            IOHIDEventSystemClientDispatchEvent(hidClient, downEvent);
+            CFRelease(downEvent);
+        }
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.05 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            uint64_t upTime = mach_absolute_time();
+            IOHIDEventRef upEvent = IOHIDEventCreateDigitizerFingerEvent(
+                kCFAllocatorDefault, 
+                upTime, 
+                0, 
+                0,          
+                0, 
+                point, 
+                0.0,        
+                0, 0, 0, 
+                0, 
+                false,      
+                false       
+            );
+            
+            if (upEvent) {
+                IOHIDEventSystemClientDispatchEvent(hidClient, upEvent);
+                CFRelease(upEvent);
             }
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.05 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                if ([targetView respondsToSelector:@selector(touchesEnded:withEvent:)]) {
-                    [targetView touchesEnded:[NSSet set] withEvent:nil];
-                }
-            });
-        } @catch (NSException *e) {}
+        });
     }
 
     [self showClickEffectAtPoint:point color:[UIColor systemGreenColor]];
