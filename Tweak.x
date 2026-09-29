@@ -41,7 +41,6 @@
 
 - (void)buttonTapped {
     NSLog(@"[AutoClicker] 悬浮按钮被成功点击了！");
-    // 可以在这里加入你的自动点击逻辑
 }
 
 @end
@@ -49,7 +48,7 @@
 static AutoClickerWindow *floatingWindow = nil;
 
 %ctor {
-    NSLog(@"[AutoClicker] 插件 %ctor 构造函数开始执行！");
+    NSLog(@"[AutoClicker] 插件构造函数开始执行！");
     
     // 延迟 3 秒确保 SpringBoard 桌面完全加载完毕
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -57,7 +56,7 @@ static AutoClickerWindow *floatingWindow = nil;
             CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
             CGFloat screenHeight = [UIScreen mainScreen].bounds.size.height;
             
-            // 放置在屏幕右侧偏下位置（避开状态栏和 Dock 栏）
+            // 放置在屏幕右侧偏下位置
             CGRect winRect = CGRectMake(screenWidth - 80, screenHeight - 260, 60, 60);
             floatingWindow = [[AutoClickerWindow alloc] initWithFrame:winRect];
         }
