@@ -1,12 +1,10 @@
-target := iphone:clang:latest:16.0
-THEOS_PACKAGE_SCHEME = rootless
-INSTALL_TARGET_PROCESSES = SpringBoard
+target := iphone:clang:latest:14.0
+ARCHS = arm64
+LIBRARY_NAME = AutoClicker
+
+AutoClicker_FILES = Tweak.mm
+AutoClicker_CFLAGS = -fobjc-arc
+AutoClicker_FRAMEWORKS = UIKit WebKit
 
 include $(THEOS)/makefiles/common.mk
-
-TWEAK_NAME = AutoClicker
-
-AutoClicker_FILES = Tweak.x
-AutoClicker_CFLAGS = -fobjc-arc
-
-include $(THEOS_MAKE_PATH)/tweak.mk
+include $(THEOS)/makefiles/library.mk
