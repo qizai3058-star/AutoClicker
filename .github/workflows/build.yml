@@ -16,18 +16,13 @@ jobs:
 
     - name: Setup Theos and Build
       run: |
-        # 1. 安装 Theos 到 ~/theos
         export THEOS=~/theos
         git clone --recursive https://github.com/theos/theos.git $THEOS
-        
-        # 2. 安装 ldid 和 编译工具
         brew install ldid make
-        
-        # 3. 开始编译打包
         make package
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: Deb-Package
-        path: path: *.deb
+        path: "*.deb"
