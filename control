@@ -1,9 +1,0 @@
-Package: com.yourname.autoclicker
-Name: AutoClicker
-Depends: mobilesubstrate
-Version: 1.0.0
-Architecture: iphoneos-arm64
-Description: An awesome iOS tweak!
-Maintainer: YourName
-Author: YourName
-Section: Tweaks
