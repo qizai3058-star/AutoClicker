@@ -1,4 +1,4 @@
-name: Build Dylib
+name: Build Deb Package
 
 on: [push]
 
@@ -10,16 +10,16 @@ jobs:
       - name: Setup Theos
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
-      - name: Install ldid
+      - name: Install ldid & dpkg
         run: |
-          brew install ldid
-      - name: Compile
+          brew install ldid dpkg
+      - name: Compile & Package Deb
         run: |
           export THEOS=$HOME/theos
           export PATH=$THEOS/bin:$PATH
-          make
+          make package
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AutoClicker
-          path: .theos/obj/debug/AutoClicker.dylib
+          name: AutoClicker-Deb
+          path: packages/*.deb
