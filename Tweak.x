@@ -3,10 +3,10 @@
 #include <IOKit/hid/IOHIDEvent.h>
 #include <IOKit/hid/IOHIDEventSystemClient.h>
 
-// 完整准确的私有 API 声明
+// 提前声明结构体类型与私有 API
+typedef struct __IOHIDEventSystemClient *IOHIDEventSystemClientRef;
+
 extern "C" {
-    typedef void* IOHIDEventSystemClientRef;
-    
     IOHIDEventSystemClientRef IOHIDEventSystemClientCreate(CFAllocatorRef allocator);
     void IOHIDEventSystemClientDispatchEvent(IOHIDEventSystemClientRef client, IOHIDEventRef event);
 
