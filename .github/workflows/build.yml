@@ -1,28 +1,21 @@
-name: Build DEB Package
+name: Build Dylib
 
-on:
-  push:
-    branches: [ "*" ]
-  pull_request:
-    branches: [ "*" ]
+on: [push]
 
 jobs:
   build:
     runs-on: macos-latest
-
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
-    - name: Setup Theos and Build
-      run: |
-        export THEOS=~/theos
-        git clone --recursive https://github.com/theos/theos.git $THEOS
-        brew install ldid make
-        make package THEOS_PACKAGE_SCHEME=rootless
-
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Deb-Package
-        path: "packages/*.deb"
+      - uses: actions/checkout@v3
+      - name: Setup Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos
+      - name: Compile
+        run: |
+          export THEOS=$HOME/theos
+          make
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: AutoClicker
+          path: .theos/obj/debug/AutoClicker.dylib
