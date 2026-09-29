@@ -3,7 +3,7 @@ Name: AutoClicker
 Depends: mobilesubstrate
 Version: 1.0.0
 Architecture: iphoneos-arm64
-Description: An automated clicker tweak for iOS
+Description: An awesome iOS tweak!
 Maintainer: YourName
 Author: YourName
 Section: Tweaks
