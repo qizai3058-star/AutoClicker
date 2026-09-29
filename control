@@ -1,18 +1,9 @@
-Package: com.yourname.autoclick
-Name: 支付宝硬件级点击器
+Package: com.yourname.autoclicker
+Name: AutoClicker
 Depends: mobilesubstrate
 Version: 1.0.0
-Architecture: iphoneos-arm
-Description: 使用 IOHIDEvent 模拟物理点击的越狱支付宝自动化插件
-Maintainer: YourName
-Author: YourName
-Section: Tweaks
-Package: com.yourname.autoclick
-Name: 支付宝硬件级点击器
-Depends: mobilesubstrate
-Version: 1.0.0
-Architecture: iphoneos-arm
-Description: 使用 IOHIDEvent 模拟物理点击的越狱支付宝自动化插件
+Architecture: iphoneos-arm64
+Description: An automated clicker tweak for iOS
 Maintainer: YourName
 Author: YourName
 Section: Tweaks
