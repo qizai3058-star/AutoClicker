@@ -1,0 +1,18 @@
+Package: com.yourname.autoclick
+Name: 支付宝硬件级点击器
+Depends: mobilesubstrate
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: 使用 IOHIDEvent 模拟物理点击的越狱支付宝自动化插件
+Maintainer: YourName
+Author: YourName
+Section: Tweaks
+Package: com.yourname.autoclick
+Name: 支付宝硬件级点击器
+Depends: mobilesubstrate
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: 使用 IOHIDEvent 模拟物理点击的越狱支付宝自动化插件
+Maintainer: YourName
+Author: YourName
+Section: Tweaks
