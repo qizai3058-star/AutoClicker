@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>items</key>
+    <array>
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>AutoClicker 自动化设置</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>default</key>
+            <true/>
+            <key>defaults</key>
+            <string>com.yourname.autoclicker</string>
+            <key>key</key>
+            <string>isEnabled</string>
+            <key>label</key>
+            <string>启用插件悬浮窗</string>
+        </dict>
+    </array>
+    <key>title</key>
+    <string>AutoClicker</string>
+</dict>
+</plist>
