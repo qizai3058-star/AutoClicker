@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#include <mach/mach_time.h>
 #include <IOKit/hid/IOHIDEvent.h>
 #include <IOKit/hid/IOHIDEventSystemClient.h>
 
@@ -7,20 +8,19 @@ extern "C" {
     IOHIDEventRef IOHIDEventCreateDigitizerEvent(
         CFAllocatorRef allocator, 
         AbsoluteTime timeStamp, 
-        IOHIDEventOptionBits options, 
-        IOHIDDigitizerEventMask eventMask, 
         IOHIDDigitizerTransducerType transducerType, 
-        uint32_t entryID, 
-        uint32_t quality, 
-        uint32_t density, 
-        CGFloat x, 
-        CGFloat y, 
-        CGFloat z, 
-        CGFloat pressure, 
-        CGFloat twist, 
+        uint32_t index, 
+        uint32_t identity, 
+        uint32_t eventMask, 
+        uint32_t buttonMask, 
+        IOHIDFloat x, 
+        IOHIDFloat y, 
+        IOHIDFloat z, 
+        IOHIDFloat tipPressure, 
+        IOHIDFloat barrelPressure, 
         Boolean range, 
         Boolean touch, 
-        IOHIDEventOptionBits eventOptions
+        IOOptionBits options
     );
 
     IOHIDEventSystemClientRef IOHIDEventSystemClientCreate(CFAllocatorRef allocator);
@@ -82,23 +82,24 @@ extern "C" {
 - (void)simulateClickLoop {
     if (!self.isClicking) return;
 
-    // 获取悬浮窗当前在屏幕上的坐标（即模拟点击的位置）
     CGPoint point = [self.clickButton.superview convertPoint:self.clickButton.center toView:nil];
 
     IOHIDEventSystemClientRef client = IOHIDEventSystemClientCreate(kCFAllocatorDefault);
     if (client) {
-        AbsoluteTime ts = mach_absolute_time();
+        AbsoluteTime ts;
+        ts.sub = mach_absolute_time();
         
-        // 模拟按下
-        IOHIDEventRef down = IOHIDEventCreateDigitizerEvent(kCFAllocatorDefault, ts, 3, 0, 1, 1, 0, 0, point.x, point.y, 0, 1.0, 0, 1, 1, 0);
+        // 模拟按下 (15个精确参数)
+        IOHIDEventRef down = IOHIDEventCreateDigitizerEvent(kCFAllocatorDefault, ts, kIOHIDDigitizerTransducerTypeStylus, 0, 1, kIOHIDDigitizerEventTouch | kIOHIDDigitizerEventRange, 0, point.x, point.y, 0, 1.0, 0, 1, 1, 0);
         if (down) {
             IOHIDEventSystemClientDispatchEvent(client, down);
             CFRelease(down);
         }
 
         // 模拟抬起
-        AbsoluteTime upts = mach_absolute_time();
-        IOHIDEventRef up = IOHIDEventCreateDigitizerEvent(kCFAllocatorDefault, upts, 3, 0, 1, 1, 0, 0, point.x, point.y, 0, 0, 0, 0, 0, 0);
+        AbsoluteTime upts;
+        upts.sub = mach_absolute_time();
+        IOHIDEventRef up = IOHIDEventCreateDigitizerEvent(kCFAllocatorDefault, upts, kIOHIDDigitizerTransducerTypeStylus, 0, 1, 0, 0, point.x, point.y, 0, 0, 0, 0, 0, 0);
         if (up) {
             IOHIDEventSystemClientDispatchEvent(client, up);
             CFRelease(up);
@@ -107,7 +108,6 @@ extern "C" {
         CFRelease(client);
     }
 
-    // 循环点击间隔（秒）
     [self performSelector:@selector(simulateClickLoop) withObject:nil afterDelay:1.0];
 }
 
