@@ -30,4 +30,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Deb-Package
-        path: packages/*.deb
+        path: path: *.deb
