@@ -15,7 +15,8 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup Theos
-      uses: hennes/theos-action@main
+      uses: uses: rizzv/theos-action@v1.0.6
+
 
     - name: Build Package
       run: make package
