@@ -5,46 +5,60 @@
 @end
 
 @implementation AutoClickerWindow
-- (id)initWithFrame:(CGRect)frame {
+
+- (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
+        // 提升到最高窗口层级，凌驾于所有桌面图标和弹窗之上
         self.windowLevel = UIWindowLevelAlert + 9999;
         self.backgroundColor = [UIColor clearColor];
         
-        // 必须赋予根视图控制器，否则 iOS 16 无法渲染
+        // iOS 16 必须配置根视图控制器
         UIViewController *rootVC = [[UIViewController alloc] init];
         rootVC.view.backgroundColor = [UIColor clearColor];
         self.rootViewController = rootVC;
 
-        // 创建一个醒目的蓝色悬浮按钮
+        // 创建蓝色圆形悬浮按钮
         self.clickButton = [UIButton buttonWithType:UIButtonTypeCustom];
         self.clickButton.frame = CGRectMake(0, 0, 60, 60);
         self.clickButton.backgroundColor = [UIColor systemBlueColor];
-        [self.clickButton setTitle:@"点我" forState:UIControlStateNormal];
+        [self.clickButton setTitle:@"点击" forState:UIControlStateNormal];
         [self.clickButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         self.clickButton.layer.cornerRadius = 30;
         self.clickButton.clipsToBounds = YES;
         
+        // 添加点击事件测试
+        [self.clickButton addTarget:self action:@selector(buttonTapped) forControlEvents:UIControlEventTouchUpInside];
+        
         [rootVC.view addSubview:self.clickButton];
         
-        // 显式显示窗口
         self.hidden = NO;
         [self makeKeyAndVisible];
+        NSLog(@"[AutoClicker] 悬浮窗 UIWindow 已成功创建并显示！");
     }
     return self;
 }
+
+- (void)buttonTapped {
+    NSLog(@"[AutoClicker] 悬浮按钮被成功点击了！");
+    // 可以在这里加入你的自动点击逻辑
+}
+
 @end
 
 static AutoClickerWindow *floatingWindow = nil;
 
 %ctor {
-    // 延迟 2 秒等桌面完全加载后创建
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    NSLog(@"[AutoClicker] 插件 %ctor 构造函数开始执行！");
+    
+    // 延迟 3 秒确保 SpringBoard 桌面完全加载完毕
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         if (!floatingWindow) {
             CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
             CGFloat screenHeight = [UIScreen mainScreen].bounds.size.height;
-            // 固定放在屏幕右下角显眼的位置
-            CGRect winRect = CGRectMake(screenWidth - 90, screenHeight - 280, 60, 60);
+            
+            // 放置在屏幕右侧偏下位置（避开状态栏和 Dock 栏）
+            CGRect winRect = CGRectMake(screenWidth - 80, screenHeight - 260, 60, 60);
             floatingWindow = [[AutoClickerWindow alloc] initWithFrame:winRect];
         }
     });
