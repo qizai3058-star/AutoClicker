@@ -3,8 +3,13 @@
 #include <IOKit/hid/IOHIDEvent.h>
 #include <IOKit/hid/IOHIDEventSystemClient.h>
 
-// 声明私有 IOHIDEvent 方法
+// 完整准确的私有 API 声明
 extern "C" {
+    typedef void* IOHIDEventSystemClientRef;
+    
+    IOHIDEventSystemClientRef IOHIDEventSystemClientCreate(CFAllocatorRef allocator);
+    void IOHIDEventSystemClientDispatchEvent(IOHIDEventSystemClientRef client, IOHIDEventRef event);
+
     IOHIDEventRef IOHIDEventCreateDigitizerEvent(
         CFAllocatorRef allocator, 
         AbsoluteTime timeStamp, 
@@ -22,9 +27,6 @@ extern "C" {
         Boolean touch, 
         IOOptionBits options
     );
-
-    IOHIDEventSystemClientRef IOHIDEventSystemClientCreate(CFAllocatorRef allocator);
-    void IOHIDEventSystemClientDispatchEvent(IOHIDEventSystemClientRef client, IOHIDEventRef event);
 }
 
 // 悬浮窗与点击逻辑实现
@@ -87,9 +89,9 @@ extern "C" {
     IOHIDEventSystemClientRef client = IOHIDEventSystemClientCreate(kCFAllocatorDefault);
     if (client) {
         AbsoluteTime ts;
-        ts.sub = mach_absolute_time();
+        *(uint64_t *)&ts = mach_absolute_time();
         
-        // 模拟按下 (15个精确参数)
+        // 模拟按下
         IOHIDEventRef down = IOHIDEventCreateDigitizerEvent(kCFAllocatorDefault, ts, kIOHIDDigitizerTransducerTypeStylus, 0, 1, kIOHIDDigitizerEventTouch | kIOHIDDigitizerEventRange, 0, point.x, point.y, 0, 1.0, 0, 1, 1, 0);
         if (down) {
             IOHIDEventSystemClientDispatchEvent(client, down);
@@ -98,7 +100,7 @@ extern "C" {
 
         // 模拟抬起
         AbsoluteTime upts;
-        upts.sub = mach_absolute_time();
+        *(uint64_t *)&upts = mach_absolute_time();
         IOHIDEventRef up = IOHIDEventCreateDigitizerEvent(kCFAllocatorDefault, upts, kIOHIDDigitizerTransducerTypeStylus, 0, 1, 0, 0, point.x, point.y, 0, 0, 0, 0, 0, 0);
         if (up) {
             IOHIDEventSystemClientDispatchEvent(client, up);
