@@ -10,6 +10,10 @@ jobs:
       - name: Setup Theos
         run: |
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
+      - name: Download SDK
+        run: |
+          mkdir -p $HOME/theos/sdks
+          git clone --depth=1 https://github.com/leminkong/iPhoneOSX.sdk.git $HOME/theos/sdks/iPhoneOS14.5.sdk
       - name: Compile
         run: |
           export THEOS=$HOME/theos
