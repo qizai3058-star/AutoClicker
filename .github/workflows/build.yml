@@ -13,6 +13,7 @@ jobs:
       - name: Compile
         run: |
           export THEOS=$HOME/theos
+          export PATH=$THEOS/bin:$PATH
           make
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
