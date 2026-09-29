@@ -1,0 +1,9 @@
+Package: com.qizai.autoclicker
+Name: AutoClicker
+Depends: mobilesubstrate, firmware (>= 13.0)
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: iOS 自动化点击与模拟触控插件
+Maintainer: qizai
+Author: qizai
+Section: Tweaks
